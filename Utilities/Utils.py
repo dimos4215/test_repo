@@ -8,12 +8,12 @@ available objects
 
 
 def load_possible_items(users, constrain_matrix, dataframe):
-    constrain_flag = 1
+    constrain_flag =0
 
     for i in users:
         temp = constrain_matrix.loc[users[i].id, :]
 
-        for item in temp[(temp == constrain_flag)].keys():
+        for item in temp[(temp != constrain_flag)].keys():
             rating = dataframe.loc[users[i].id, item]
             users[i].possible_items[item] = rating
             users[i].possible_items_list.append(item)

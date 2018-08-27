@@ -1,5 +1,5 @@
 import pandas as pd
-from entities.User import User
+from Upini_thesis_project.entities.User import User
 
 '''
 this class handles the loading of the raw files
@@ -45,8 +45,8 @@ class Datasource:
             self.userslist.append(u)
             self.user_map[ind] = User(u)
             ind += 1
-        print('all users')
-        print(self.userslist)
+        print('all users:',len(self.userslist))
+
 
     def get_items(self):
         '''
@@ -58,8 +58,8 @@ class Datasource:
             if u != 'user':
                 self.item_map[u] = ind
                 ind += 1
-        print('all items')
-        print(self.item_map)
+        print('all items:',len(list(self.item_map.keys())))
+
 
 
 '''

@@ -16,16 +16,18 @@ class Config:
         '''
         self.csv_r_ind={'user_id':1,'item_id':2,'rating':3}
 
-        self.dataframe_dir = 'files/1_raw_data/dt'
-        self.constrain_dir = 'files/1_raw_data/constrains'
+        self.dataframe_dir = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/Utilities/test'
+        self.constrain_dir = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/Utilities/test_constrains'
+        #self.dataframe_dir = 'files/1_raw_data/dt'
+        #self.constrain_dir = 'files/1_raw_data/constrains'
         '''
         ->group_size : set how many users are contained in a group
         ->number_of_top_items: the number of top K items that would be recommendable to a user 
         from all the available items
         -> rec_repeatability_of_item : is the max number of users that can get the same item
         '''
-        self.group_size = 3
-        self.number_of_top_items = 3
+        self.group_size = 4
+        self.number_of_top_items = 2
         self.rec_repeatability_of_item = 2
         '''
         options for fairness_measure

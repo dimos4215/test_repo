@@ -2,6 +2,9 @@ from Upini_thesis_project.Utilities import Utils
 import numpy as np
 from sklearn.metrics import mean_squared_error
 from math import sqrt
+from Upini_thesis_project.Utilities.ProgressBar import ProgressBar
+import sys
+
 
 NUM_CORE = 4  # set to the number of cores you want to use
 
@@ -16,10 +19,21 @@ NUM_CORE = 4  # set to the number of cores you want to use
 
 def combination_test(groups, usersobj):
 
+    number_of_all_groups = len(list(groups.keys()))
+
+    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
+
+
+
+    print('number_of_all_groups:',number_of_all_groups)
+
+
     for group_id in groups:
         users_group_index = groups[group_id].users
         number_of_users = len(users_group_index)
         item_combination_list = Utils.combinations_generator(groups[group_id].rlist_of_items, number_of_users)
+        progress.current += 1
+        progress()
 
         for comb in item_combination_list:
             metric = 0
@@ -40,6 +54,11 @@ def combination_test(groups, usersobj):
 
             if pass_flag:
                 groups[group_id].result_obj[comb] = {'rating_list': rating_list}
+
+
+    progress.done()
+
+
 
 
 
