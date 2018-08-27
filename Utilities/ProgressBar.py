@@ -7,8 +7,7 @@ class ProgressBar(object):
     DEFAULT = 'Progress: %(bar)s %(percent)3d%%'
     FULL = '%(bar)s %(current)d/%(total)d (%(percent)3d%%) %(remaining)d to go'
 
-    def __init__(self, total, width=40, fmt=DEFAULT, symbol='=',
-                 output=sys.stderr):
+    def __init__(self, total, width=40, fmt=DEFAULT, symbol='=', output=sys.stderr):
         assert len(symbol) == 1
 
         self.total = total
