@@ -3,6 +3,18 @@ class Config:
     def __init__(self):
 
 
+        '''
+        dataset directory
+        '''
+        self.dataset_dir = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/files/1_raw_data/movielens/u.data'
+        self.min_number_of_rated_items = 21
+
+        self.test_size = 0.25
+        '''
+        Imported csv files have the format user_id,item_id,rating.
+        The rec_csv_read_indexes idfentifies the position of each entity
+        '''
+        self.csv_r_ind={'user_id':1,'item_id':2,'rating':3}
 
         self.dataframe_dir = 'files/1_raw_data/dt'
         self.constrain_dir = 'files/1_raw_data/constrains'
