@@ -12,6 +12,11 @@ class GroupOfUsers:
         self.user_map = {}
         self.top_items = {}
         self.rlist_of_items = []
+        '''
+        self.result_obj contains:
+        :keys the item combination
+        :params 
+        '''
         self.result_obj = {}
         self.best_combination = {}
 

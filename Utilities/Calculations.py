@@ -5,9 +5,7 @@ from math import sqrt
 from Upini_thesis_project.Utilities.ProgressBar import ProgressBar
 import sys
 
-
 NUM_CORE = 4  # set to the number of cores you want to use
-
 
 '''
 1.Iterate over all groups
@@ -18,15 +16,11 @@ NUM_CORE = 4  # set to the number of cores you want to use
 
 
 def combination_test(groups, usersobj):
-
     number_of_all_groups = len(list(groups.keys()))
 
     progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
 
-
-
-    print('number_of_all_groups:',number_of_all_groups)
-
+    print('number_of_all_groups:', number_of_all_groups)
 
     for group_id in groups:
         users_group_index = groups[group_id].users
@@ -40,8 +34,51 @@ def combination_test(groups, usersobj):
             rating_list = []
             pass_flag = True
 
-            for user_combination_index, item in enumerate(comb):
-                temp_user_obj = usersobj[users_group_index[user_combination_index]]
+            for user_group_index, item in enumerate(comb):
+                temp_user_obj = usersobj[users_group_index[user_group_index]]
+
+                if item in temp_user_obj.possible_items:
+                    rating = temp_user_obj.possible_items[item]
+                    metric += rating
+                    rating_list.append(rating)
+
+                else:
+                    pass_flag = not pass_flag
+                    break
+
+            if pass_flag:
+                groups[group_id].result_obj[comb] = {'rating_list': rating_list}
+
+    progress.done()
+
+
+'''
+back up
+    
+
+    
+====================(original)====================
+def combination_test(groups, usersobj):
+    number_of_all_groups = len(list(groups.keys()))
+
+    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
+
+    print('number_of_all_groups:', number_of_all_groups)
+
+    for group_id in groups:
+        users_group_index = groups[group_id].users
+        number_of_users = len(users_group_index)
+        item_combination_list = Utils.combinations_generator(groups[group_id].rlist_of_items, number_of_users)
+        progress.current += 1
+        progress()
+
+        for comb in item_combination_list:
+            metric = 0
+            rating_list = []
+            pass_flag = True
+
+            for user_group_index, item in enumerate(comb):
+                temp_user_obj = usersobj[users_group_index[user_group_index]]
 
                 if item in temp_user_obj.possible_items_list:
                     rating = temp_user_obj.possible_items[item]
@@ -55,12 +92,59 @@ def combination_test(groups, usersobj):
             if pass_flag:
                 groups[group_id].result_obj[comb] = {'rating_list': rating_list}
 
-
     progress.done()
+    
+    
+====================(improvement with dict hash/ low results)====================    
+def combination_test(groups, usersobj):
+
+    number_of_all_groups = len(list(groups.keys()))
+
+    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
+
+    print('number_of_all_groups:',number_of_all_groups)
+
+    for group_id in groups:
+        users_group_list = groups[group_id].users
+        number_of_users = len(users_group_list)
+        item_combination_list = Utils.combinations_generator(groups[group_id].rlist_of_items, number_of_users)
+        progress.current += 1
+        progress()
+
+        temp_map_user_index_to_user_object = {}
+        temp_map_user_index_to_user_possible_item_set= {}
+        #print('group_id',group_id)
+        for index in range(number_of_users):
+
+            temp_map_user_index_to_user_object[index] = usersobj[users_group_list[index]]
+
+        for comb in item_combination_list:
+            metric = 0
+            rating_list = []
+            pass_flag = True
 
 
 
+            for user_index, item in enumerate(comb):
 
+
+                temp_user_obj = temp_map_user_index_to_user_object[user_index]
+
+                if item in temp_user_obj.possible_items:
+                    rating = temp_user_obj.possible_items[item]
+                    metric += rating
+                    rating_list.append(rating)
+
+                else:
+                    pass_flag = not pass_flag
+                    break
+
+            if pass_flag:
+                groups[group_id].result_obj[comb] = {'rating_list': rating_list}
+
+
+    progress.done()    
+'''
 
 
 def user_satisfaction_prep(groups, usersobj):
@@ -119,9 +203,7 @@ def group_feature_gereration(groups):
             group_combinations[comb]['min_max_ratio'] = min(rating_list)
 
 
-
-def get_top_combination(groups,fairness_measure):
-
+def get_top_combination(groups, fairness_measure):
     for group_id in groups:
         group_combinations = groups[group_id].result_obj
 
@@ -137,15 +219,15 @@ def get_top_combination(groups,fairness_measure):
 
         groups[group_id].best_combination[best_comb] = best_score
 
-        print('-->group_id',group_id,'best_comb',best_comb,'best_score',best_score)
+        print('-->group_id', group_id, 'best_comb', best_comb, 'best_score', best_score)
 
 
 '''
 Recommender: Generate the predictions from the initial utility matrix and the similarity matrix
 '''
 
-def generate_prediction_matrix(initial_utility_matrix, entity_similarity_matrix, recommendation_type='user'):
 
+def generate_prediction_matrix(initial_utility_matrix, entity_similarity_matrix, recommendation_type='user'):
     '''
     :param initial_utility_matrix: the utility matrix as it was loaded from the raw data
     :param entity_similarity_matrix: the table that contains the similarity between users
@@ -184,8 +266,8 @@ def generate_prediction_matrix(initial_utility_matrix, entity_similarity_matrix,
 Recommender: Metric to calculate Recommender accuracy
 '''
 
-def calculate_RMSE(matrix_with_predictions, matrix_with_test_data):
 
+def calculate_RMSE(matrix_with_predictions, matrix_with_test_data):
     '''
     :param matrix_with_predictions: np_array
     :param matrix_with_test_data: np_array
@@ -198,8 +280,7 @@ def calculate_RMSE(matrix_with_predictions, matrix_with_test_data):
     '''
 
     indexes_of_test_values = matrix_with_test_data.nonzero()
-    predicted_values = matrix_with_predictions[indexes_of_test_values]# (Flatten?).flatten()
-    test_values = matrix_with_test_data[indexes_of_test_values]#.flatten()
+    predicted_values = matrix_with_predictions[indexes_of_test_values]  # (Flatten?).flatten()
+    test_values = matrix_with_test_data[indexes_of_test_values]  # .flatten()
 
     return sqrt(mean_squared_error(predicted_values, test_values))
-
