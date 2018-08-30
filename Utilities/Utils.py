@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 
 '''
-It takes the user_map and for each user based on the constrain matrix returns for each user the
+It takes the index_to_user_obj_map and for each user based on the constrain matrix returns for each user the
 available objects
 '''
 
@@ -83,12 +83,12 @@ def create_group_recommendation_list(group, repeatability_of_item):
 def combinations_generator(list, repeat):
     # https://www.mathplanet.com/education/algebra-2/discrete-mathematics-and-probability/permutations-and-combinations
     item_combination_map = {}
-    ct= 0
+
     for item_combination in itertools.permutations(list, repeat):
-        ct+=1
+
         if item_combination not in item_combination_map:
             item_combination_map[item_combination]=''
-    print('number of tota combinations:',ct)
+
     return item_combination_map
 '''
 back up

@@ -4,10 +4,15 @@ class Config:
 
         '''
         dataset directory
+        log result file directory - dynamically generated based on test settings
         '''
         self.dataset_dir = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/files/1_raw_data/movielens/u.data'
-        self.min_number_of_rated_items = 21
 
+
+
+        self.log_dir=''
+
+        self.min_number_of_rated_items = 21
         self.test_size = 0.25
         '''
         Imported csv files have the format user_id,item_id,rating.
@@ -25,9 +30,9 @@ class Config:
         from all the available items
         -> rec_repeatability_of_item : is the max number of users that can get the same item
         '''
-        self.group_size = 4
+        self.group_size = 2
         self.number_of_top_items = 3
-        self.rec_repeatability_of_item = 2
+        self.rec_repeatability_of_item = 1
         '''
         options for fairness_measure
         1.least_misery
@@ -35,6 +40,8 @@ class Config:
         3.min_max_ratio
         '''
         self.fairness_measure = 'least_misery'
+
+        self.log_file_name()
 
     def __str__(self):
 
@@ -46,12 +53,14 @@ class Config:
         string += '\n' + '===========================================================' + '\n'
         return string
 
-    def __call__(self):
+    def log_file_name(self):
 
-        string = ''
-        for prop in self.__dict__:
-            if prop != 'csv_r_ind':
-                string += '\n' + prop + ' : ' + str(self.__dict__[prop])
+        string = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/files/2_processed/log_'
 
-        string += '\n'
-        return string
+        string += 'grp_sz_' + str(self.group_size)
+        string += '_top_it_' + str(self.number_of_top_items)
+        string += '_item_rep_' + str(self.rec_repeatability_of_item)
+
+        string += '.txt'
+        self.log_dir = string
+

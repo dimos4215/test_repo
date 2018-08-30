@@ -5,15 +5,17 @@ import numpy as np
 
 class GroupGenerator:
 
-    def __init__(self, data_obj, group_size=1):
+    def __init__(self, datasource_obj, group_size=1):
         self.grp_size = group_size
-        self.all_users = list(data_obj.user_map.keys())
+        self.all_users = list(datasource_obj.index_to_user_obj_map.keys())
         self.available_users = self.all_users
         self.group_map = {}
         self.used_users = []
-        self.sim_matrix = cosine_similarity(data_obj.dataframe)
+        self.sim_matrix = cosine_similarity(datasource_obj.dataframe)
+        self.sim_matrix_stats = cosine_similarity(datasource_obj.dataframe)
         self.group_number = 0
         self.used_flag_val = -1000
+
 
     def generate_similar_group(self):
 
@@ -59,7 +61,7 @@ class GroupGenerator:
             self.group_map[self.group_number] = GroupOfUsers(self.group_number, grp_tmp)
             self.group_number += 1
 
-        print('sim_groups finished')
+
 
 
     def generate_dissimilar_group(self):
@@ -111,5 +113,5 @@ class GroupGenerator:
             self.group_map[self.group_number] = GroupOfUsers(self.group_number, grp_tmp)
             self.group_number += 1
 
-        print('dis_groups finished')
+
 

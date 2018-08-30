@@ -15,20 +15,26 @@ NUM_CORE = 4  # set to the number of cores you want to use
 '''
 
 
-def combination_test(groups, usersobj):
-    number_of_all_groups = len(list(groups.keys()))
+def combination_test(groups_map, usersobj, log):
+
+    number_of_all_groups = len(list(groups_map.keys()))
+
+    log.log_metric('number_of_all_groups',number_of_all_groups)
 
     progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
 
+
     print('number_of_all_groups:', number_of_all_groups)
 
-    for group_id in groups:
-        users_group_index = groups[group_id].users
+    for group_id in groups_map:
+        users_group_index = groups_map[group_id].users
         number_of_users = len(users_group_index)
-        item_combination_list = Utils.combinations_generator(groups[group_id].rlist_of_items, number_of_users)
+        item_combination_list = Utils.combinations_generator(groups_map[group_id].rlist_of_items, number_of_users)
         progress.current += 1
         progress()
-
+        tested_combinations = len(item_combination_list)
+        log.log_metric('tested_combinations', tested_combinations)
+        valid_combinations = 0
         for comb in item_combination_list:
             metric = 0
             rating_list = []
@@ -47,8 +53,9 @@ def combination_test(groups, usersobj):
                     break
 
             if pass_flag:
-                groups[group_id].result_obj[comb] = {'rating_list': rating_list}
-
+                groups_map[group_id].result_obj[comb] = {'rating_list': rating_list}
+                valid_combinations+=1
+        log.log_metric('valid_combinations', valid_combinations)
     progress.done()
 
 
@@ -203,15 +210,19 @@ def group_feature_gereration(groups):
             group_combinations[comb]['min_max_ratio'] = min(rating_list)
 
 
-def get_top_combination(groups, fairness_measure):
+def get_top_combination(groups, fairness_measure, log):
     for group_id in groups:
         group_combinations = groups[group_id].result_obj
 
         best_comb = None
         best_score = -1111111
 
+        metric = 'group_id_'+str(group_id)+'satisfaction'
+
         for comb in group_combinations:
             score = group_combinations[comb][fairness_measure]
+
+            log.log_metric(metric, score)
 
             if best_score < score:
                 best_score = score

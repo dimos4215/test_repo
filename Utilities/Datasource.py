@@ -17,8 +17,8 @@ class Datasource:
         self.load_df()
         self.load_constrains()
         self.userslist = []
-        self.item_map = {}
-        self.user_map = {}
+        self.item_to_index_map = {}
+        self.index_to_user_obj_map = {}
 
     def load_df(self):
         '''
@@ -43,7 +43,7 @@ class Datasource:
         ind = 0
         for u in self.dataframe.index:
             self.userslist.append(u)
-            self.user_map[ind] = User(u)
+            self.index_to_user_obj_map[ind] = User(u)
             ind += 1
         print('all users:',len(self.userslist))
 
@@ -56,9 +56,9 @@ class Datasource:
         ind = 0
         for u in self.dataframe:
             if u != 'user':
-                self.item_map[u] = ind
+                self.item_to_index_map[u] = ind
                 ind += 1
-        print('all items:',len(list(self.item_map.keys())))
+        print('all items:', len(list(self.item_to_index_map.keys())))
 
 
 
