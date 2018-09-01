@@ -28,6 +28,7 @@ below are described the steps of the design process:
     5.1 add a neural network for the user ordering selection
     visualize for different groups and cfg the results
 """
+from typing import Dict, Any
 
 '''
 import modules
@@ -54,6 +55,8 @@ log.log_task('dataset')
 dataset = Datasource(os.path.relpath(cfg.dataframe_dir), os.path.relpath(cfg.constrain_dir))
 dataset.get_users()
 dataset.get_items()
+
+item_stats: Dict[Any, Any]=dataset.items_stats_map
 
 map_alluser_obj = dataset.index_to_user_obj_map
 
@@ -101,7 +104,7 @@ Calculations.group_feature_gereration(group.group_map)
 
 
 log.log_task('get_top_combination')
-Calculations.get_top_combination(group.group_map, cfg.fairness_measure, log)
+Calculations.get_top_combination(group.group_map, cfg.fairness_measure, item_stats, log)
 
 
 log.end()

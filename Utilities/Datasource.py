@@ -10,6 +10,11 @@ into objects
 class Datasource:
 
     def __init__(self, utility_matrix_dir, constrain_matrix_dir):
+        '''
+
+        :param utility_matrix_dir:
+        :param constrain_matrix_dir:
+        '''
         self.dir = utility_matrix_dir
         self.con_dir = constrain_matrix_dir
         self.dataframe = 'empty'
@@ -17,8 +22,9 @@ class Datasource:
         self.load_df()
         self.load_constrains()
         self.userslist = []
-        self.item_to_index_map = {}
-        self.index_to_user_obj_map = {}
+        self.item_to_index_map = {} # maps items to indexes of arrays
+        self.index_to_user_obj_map = {} # maps user arrays indexes to user objects
+        self.items_stats_map ={} # maps object stats
 
     def load_df(self):
         '''
@@ -57,6 +63,7 @@ class Datasource:
         for u in self.dataframe:
             if u != 'user':
                 self.item_to_index_map[u] = ind
+                self.items_stats_map[u]={'number_of_groups':0,'number_of_times':0}
                 ind += 1
         print('all items:', len(list(self.item_to_index_map.keys())))
 

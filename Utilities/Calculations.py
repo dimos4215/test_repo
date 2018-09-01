@@ -4,6 +4,7 @@ from sklearn.metrics import mean_squared_error
 from math import sqrt
 from Upini_thesis_project.Utilities.ProgressBar import ProgressBar
 import sys
+from collections import Counter
 
 NUM_CORE = 4  # set to the number of cores you want to use
 
@@ -19,7 +20,7 @@ def combination_test(groups_map, usersobj, log):
 
     number_of_all_groups = len(list(groups_map.keys()))
 
-    log.log_metric('number_of_all_groups',number_of_all_groups)
+    log.log_static_metric('number_of_all_groups', number_of_all_groups)
 
     progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
 
@@ -33,7 +34,7 @@ def combination_test(groups_map, usersobj, log):
         progress.current += 1
         progress()
         tested_combinations = len(item_combination_list)
-        log.log_metric('tested_combinations', tested_combinations)
+        log.log_static_metric('tested_combinations', tested_combinations)
         valid_combinations = 0
         for comb in item_combination_list:
             metric = 0
@@ -55,7 +56,7 @@ def combination_test(groups_map, usersobj, log):
             if pass_flag:
                 groups_map[group_id].result_obj[comb] = {'rating_list': rating_list}
                 valid_combinations+=1
-        log.log_metric('valid_combinations', valid_combinations)
+        log.log_static_metric('valid_combinations', valid_combinations)
     progress.done()
 
 
@@ -210,23 +211,37 @@ def group_feature_gereration(groups):
             group_combinations[comb]['min_max_ratio'] = min(rating_list)
 
 
-def get_top_combination(groups, fairness_measure, log):
+def get_top_combination(groups, fairness_measure, item_stats, log):
+    metric_times_item_rec='Item_id,Number_of_times_recommended'
+    metric_groups_item_rec='Item_id,Number_of_groups_recommended'
+
     for group_id in groups:
         group_combinations = groups[group_id].result_obj
 
         best_comb = None
         best_score = -1111111
 
-        metric = 'group_id_'+str(group_id)+'satisfaction'
+        stat_metric_best_comb = 'group_id_'+str(group_id)+' satisfaction'
 
         for comb in group_combinations:
             score = group_combinations[comb][fairness_measure]
 
-            log.log_metric(metric, score)
+            log.log_static_metric(stat_metric_best_comb, score)
 
             if best_score < score:
                 best_score = score
                 best_comb = comb
+
+        item_times = Counter(best_comb)
+
+        print('item_times = Counter(best_comb)',item_times)
+        for item in item_times:
+            item_stats[item]['number_of_times']+=item_times[item]
+            item_stats[item]['number_of_groups'] += 1
+
+
+            log.log_dynamic_metric(metric_times_item_rec, item,item_stats[item]['number_of_times'])
+            log.log_dynamic_metric(metric_groups_item_rec, item, item_stats[item]['number_of_groups'])
 
         groups[group_id].best_combination[best_comb] = best_score
 
