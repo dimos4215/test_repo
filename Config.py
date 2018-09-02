@@ -57,8 +57,8 @@ class Config:
         self.log_dir = ''
         self.dataframe_fname = ''
         self.dfrm_file_name()
-        self.dataframe_dir = self.base_dataframe_dir + self.dataframe_fname
-        self.constrain_dir = self.base_dataframe_dir + self.dataframe_fname+'_constrains'
+        self.dataframe_dir = self.dataframe_fname
+        self.constrain_dir = self.dataframe_fname+'_constrains'
         # self.dataframe_dir = 'files/1_raw_data/dt'
         # self.constrain_dir = 'files/1_raw_data/constrains' :todo remove test dirs
         self.log_file_name()
@@ -77,11 +77,11 @@ class Config:
     def dfrm_file_name(self):
 
         string = 'df_'
-        string += 'itms-'  + str(self.min_std_of_item_ratings)
-        string += '_itmn-' + str(self.min_num_of_item_ratings)
-        string += '_urms-' + str(self.min_std_of_user_ratings)
-        string += '_urmn-' + str(self.min_num_of_user_ratings)
-        string += '_split-' + str(self.test_size)
+        string += 'itms_'  + str(self.min_std_of_item_ratings)
+        string += '_itmn_' + str(self.min_num_of_item_ratings)
+        string += '_urms_' + str(self.min_std_of_user_ratings)
+        string += '_urmn_' + str(self.min_num_of_user_ratings)
+        string += '_split_' + str(self.test_size)
 
         self.dataframe_fname = self.base_dataframe_dir + string
 

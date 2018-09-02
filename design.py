@@ -52,7 +52,9 @@ log = Logger(cfg)
 print('cfg.log_dir',cfg.log_dir)
 log.log_task('dataset')
 
-dataset = Datasource(os.path.relpath(cfg.dataframe_dir), os.path.relpath(cfg.constrain_dir))
+#dataset = Datasource(os.path.relpath(cfg.dataframe_dir), os.path.relpath(cfg.constrain_dir))
+dataset = Datasource(cfg.dataframe_dir,cfg.constrain_dir)
+
 dataset.get_users()
 dataset.get_items()
 

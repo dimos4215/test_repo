@@ -31,6 +31,7 @@ class Datasource:
         Loads the utility matrix
         '''
         # self.df = pd.read_csv(self.dir)
+        print('self.dir',self.dir)
         self.dataframe = pd.read_csv(self.dir, index_col='user')
         print("data imported!")
 
