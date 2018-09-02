@@ -3,44 +3,64 @@ class Config:
     def __init__(self):
 
         '''
-        dataset directory
-        log result file directory - dynamically generated based on test settings
+        Import dataset settings:
+            1.dataset dir
+            2.Imported csv files have the format user_id,item_id,rating.The rec_csv_read_indexes idfentifies the position of each entity
+
         '''
         self.dataset_dir = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/files/1_raw_data/movielens/u.data'
-
-
-
-        self.log_dir=''
-
-        self.min_number_of_rated_items = 21
-        self.test_size = 0.25
-        '''
-        Imported csv files have the format user_id,item_id,rating.
-        The rec_csv_read_indexes idfentifies the position of each entity
-        '''
         self.csv_r_ind = {'user_id': 1, 'item_id': 2, 'rating': 3}
 
-        self.dataframe_dir = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/Utilities/test'
-        self.constrain_dir = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/Utilities/test_constrains'
-        # self.dataframe_dir = 'files/1_raw_data/dt'
-        # self.constrain_dir = 'files/1_raw_data/constrains'
+
+
         '''
-        ->group_size : set how many users are contained in a group
-        ->number_of_top_items: the number of top K items that would be recommendable to a user 
-        from all the available items
-        -> rec_repeatability_of_item : is the max number of users that can get the same item
+        Filtering data settings, Recommender split sets and show visualizations setting
         '''
-        self.group_size = 2
-        self.number_of_top_items = 3
+
+        self.min_std_of_item_ratings = 0.8
+        self.min_num_of_item_ratings = 50
+        self.min_std_of_user_ratings = 0.8
+        self.min_num_of_user_ratings = 50
+        self.test_size = 0.10
+        self.show_charts = False
+
+
+        self.base_dataframe_dir='/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/files/2_processed/dataframes/'
+
+
+
+
+
+        '''
+        Combination Test Settings:
+            1.group_size : set how many users are contained in a group
+            2.number_of_top_items: the number of top K items that would be recommendable to a user 
+                                   from all the available items
+            3.rec_repeatability_of_item : is the max number of users that can get the same item
+        '''
+        self.group_size = 6
+        self.number_of_top_items =6
         self.rec_repeatability_of_item = 1
+
         '''
-        options for fairness_measure
-        1.least_misery
-        2.variance
-        3.min_max_ratio
+        Fairness_measure Settings
+            1.least_misery
+            2.variance
+            3.min_max_ratio
         '''
         self.fairness_measure = 'least_misery'
 
+
+        '''
+        Dynamically generated file names
+        '''
+        self.log_dir = ''
+        self.dataframe_fname = ''
+        self.dfrm_file_name()
+        self.dataframe_dir = self.base_dataframe_dir + self.dataframe_fname
+        self.constrain_dir = self.base_dataframe_dir + self.dataframe_fname+'_constrains'
+        # self.dataframe_dir = 'files/1_raw_data/dt'
+        # self.constrain_dir = 'files/1_raw_data/constrains' :todo remove test dirs
         self.log_file_name()
 
     def __str__(self):
@@ -52,6 +72,18 @@ class Config:
 
         string += '\n' + '===========================================================' + '\n'
         return string
+
+
+    def dfrm_file_name(self):
+
+        string = 'df_'
+        string += 'itms-'  + str(self.min_std_of_item_ratings)
+        string += '_itmn-' + str(self.min_num_of_item_ratings)
+        string += '_urms-' + str(self.min_std_of_user_ratings)
+        string += '_urmn-' + str(self.min_num_of_user_ratings)
+        string += '_split-' + str(self.test_size)
+
+        self.dataframe_fname = self.base_dataframe_dir + string
 
     def log_file_name(self):
 

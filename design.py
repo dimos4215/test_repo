@@ -88,7 +88,7 @@ sleep(0.1)
 print('==================Calculations======================================')
 
 
-log.log_task('combination_test')
+log.log_task('combination_test2')
 Calculations.combination_test(group.group_map, map_alluser_obj, log)
 sleep(0.1)
 
@@ -109,9 +109,10 @@ Calculations.get_top_combination(group.group_map, cfg.fairness_measure, item_sta
 
 log.end()
 
+#:todo remove design temp code
 
 '''
-backup
+backup 
 
 import time
 

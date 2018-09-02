@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import os
 
 '''
 It takes the index_to_user_obj_map and for each user based on the constrain matrix returns for each user the
@@ -90,6 +91,15 @@ def combinations_generator(list, repeat):
             item_combination_map[item_combination]=''
 
     return item_combination_map
+
+'''
+1.Generate all the permutations of items
+'''
+
+
+def combinations_generator_raw(list2, repeat):
+    return itertools.permutations(list2, repeat)
+
 '''
 back up
 ----==============(original)==============----
@@ -169,6 +179,10 @@ def export_array_to_csv_dataframe(dir, pred_array, test_array, index_to_item_dic
     :param idex_to_user_dic: dictionary that gives user_id from the array row index
     :return: nothing
     '''
+    if os.path.exists(dir):
+        os.remove(dir)
+        os.remove(dir + "_constrains")
+
     fp = open(dir, "a")
     fc = open(dir + "_constrains", "a")
 

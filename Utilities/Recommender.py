@@ -63,4 +63,4 @@ def collaborative_filtering(raw_data_dataframe,cf):
 
     print('User-based CF RMSE: ' + str(rmse_error))
 
-    export_array_to_csv_dataframe('test', user_prediction, test_data_matrix, index_item_map, index_user_map)
+    export_array_to_csv_dataframe(cf.dataframe_fname, user_prediction, test_data_matrix, index_item_map, index_user_map)

@@ -5,6 +5,7 @@ from math import sqrt
 from Upini_thesis_project.Utilities.ProgressBar import ProgressBar
 import sys
 from collections import Counter
+import itertools
 
 NUM_CORE = 4  # set to the number of cores you want to use
 
@@ -60,6 +61,129 @@ def combination_test(groups_map, usersobj, log):
     progress.done()
 
 
+def combination_test2(groups_map, usersobj, log) :#:todo remove combination_test2
+
+    number_of_all_groups = len(list(groups_map.keys()))
+
+    log.log_static_metric('number_of_all_groups', number_of_all_groups)
+
+    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
+
+
+    print('number_of_all_groups:', number_of_all_groups)
+
+    for group_id in groups_map:
+        users_group_index = groups_map[group_id].users
+        number_of_users = len(users_group_index)
+        item_combination_list = Utils.combinations_generator_raw(groups_map[group_id].rlist_of_items, number_of_users)
+        item_combination_map={}
+        progress.current += 1
+        #progress()
+        #tested_combinations = len(item_combination_list)
+        #log.log_static_metric('tested_combinations', tested_combinations)
+
+        gen_comb=0
+        test_comb = 0
+        valid_combinations = 0
+        broken_loops=0
+        for comb in item_combination_list:
+            #print('comb',comb)
+            gen_comb+=1
+            if comb in item_combination_map:
+                broken_loops+=1
+                break
+            else:
+                item_combination_map[comb]=''
+                test_comb+=1
+            metric = 0
+            rating_list = []
+            pass_flag = True
+
+            for user_group_index, item in enumerate(comb):
+                temp_user_obj = usersobj[users_group_index[user_group_index]]
+
+                if item in temp_user_obj.possible_items:
+                    rating = temp_user_obj.possible_items[item]
+                    metric += rating
+                    rating_list.append(rating)
+
+                else:
+                    pass_flag = not pass_flag
+                    break
+
+            if pass_flag:
+                groups_map[group_id].result_obj[comb] = {'rating_list': rating_list}
+                valid_combinations+=1
+        log.log_static_metric('valid_combinations', valid_combinations)
+        print('group_id',group_id,'gen_comb',gen_comb,'test_comb',test_comb,'valid_combinations',valid_combinations,'broken_loops',broken_loops,'item_combination_map',len(item_combination_map.keys()))
+    progress.done()
+
+
+
+
+def combination_test3(groups_map, usersobj, log): #:todo remove combination_test3
+
+    number_of_all_groups = len(list(groups_map.keys()))
+
+    log.log_static_metric('number_of_all_groups', number_of_all_groups)
+
+    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
+
+
+    print('number_of_all_groups:', number_of_all_groups)
+
+    for group_id in groups_map:
+        users_group_index = groups_map[group_id].users
+        number_of_users = len(users_group_index)
+
+
+        progress.current += 1
+        progress()
+        #tested_combinations = len(item_combination_list)
+        #log.log_static_metric('tested_combinations', tested_combinations)
+
+        item_combination_map = {}
+
+
+
+        gen_comb=0
+        test_comb = 0
+        valid_combinations = 0
+        broken_loops=0
+        for comb in itertools.permutations(groups_map[group_id].rlist_of_items, number_of_users):
+            #print('comb',comb)
+            gen_comb+=1
+            if comb in item_combination_map:
+                broken_loops+=1
+                pass
+            else:
+                item_combination_map[comb]=''
+                test_comb+=1
+            metric = 0
+            rating_list = []
+            pass_flag = True
+
+            for user_group_index, item in enumerate(comb):
+                temp_user_obj = usersobj[users_group_index[user_group_index]]
+
+                if item in temp_user_obj.possible_items:
+                    rating = temp_user_obj.possible_items[item]
+                    metric += rating
+                    rating_list.append(rating)
+
+                else:
+                    pass_flag = not pass_flag
+                    break
+
+            if pass_flag:
+                groups_map[group_id].result_obj[comb] = {'rating_list': rating_list}
+                valid_combinations+=1
+        log.log_static_metric('valid_combinations', valid_combinations)
+        print('group_id',group_id,'gen_comb',gen_comb,'test_comb',test_comb,'valid_combinations',valid_combinations,'broken_loops',broken_loops,'item_combination_map',len(item_combination_map.keys()))
+    progress.done()
+
+
+ #:todo remove combination_test backup
 '''
 back up
     
@@ -234,7 +358,7 @@ def get_top_combination(groups, fairness_measure, item_stats, log):
 
         item_times = Counter(best_comb)
 
-        print('item_times = Counter(best_comb)',item_times)
+        #print('item_times = Counter(best_comb)',item_times)
         for item in item_times:
             item_stats[item]['number_of_times']+=item_times[item]
             item_stats[item]['number_of_groups'] += 1
@@ -245,7 +369,7 @@ def get_top_combination(groups, fairness_measure, item_stats, log):
 
         groups[group_id].best_combination[best_comb] = best_score
 
-        print('-->group_id', group_id, 'best_comb', best_comb, 'best_score', best_score)
+        #print('-->group_id', group_id, 'best_comb', best_comb, 'best_score', best_score)
 
 
 '''

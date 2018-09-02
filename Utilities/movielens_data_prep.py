@@ -14,7 +14,7 @@ sns.set_style('white')
 
 #Variables
 data_dir = os.path.relpath(cf.dataset_dir)
-min_number_of_rated_items = cf.min_number_of_rated_items
+min_number_of_rated_items = cf.min_num_of_user_ratings
 
 print('==========Start Loading Raw data==========')
 '''
@@ -33,8 +33,8 @@ df = pd.read_csv(data_dir , sep='\t', names=column_names)
 print('Filter users with less than',min_number_of_rated_items,'ratings')
 '''
 1.count ratings grouped by user and create new dataframe
-2. filter out users with less ratings than threshold (min_number_of_rated_items)
-3. Join with initial dataset (inner join) to keep only user with more ratings than min_number_of_rated_items
+2. filter out users with less ratings than threshold (min_num_of_user_ratings)
+3. Join with initial dataset (inner join) to keep only user with more ratings than min_num_of_user_ratings
 4. Drop aggregated column
 5. Rename rating column
 '''
@@ -52,6 +52,7 @@ print('Data Load Completed\n')
 collaborative_filtering(df,cf)
 
 
+#todo: clean code and add matplotlib vis
 '''
 f = open("demofile.txt", "a")
 
