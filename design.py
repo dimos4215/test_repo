@@ -58,7 +58,7 @@ dataset = Datasource(cfg.dataframe_dir,cfg.constrain_dir)
 dataset.get_users()
 dataset.get_items()
 
-item_stats: Dict[Any, Any]=dataset.items_stats_map
+item_stats = dataset.items_stats_map
 
 map_alluser_obj = dataset.index_to_user_obj_map
 

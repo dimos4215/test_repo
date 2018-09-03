@@ -38,9 +38,9 @@ class Config:
                                    from all the available items
             3.rec_repeatability_of_item : is the max number of users that can get the same item
         '''
-        self.group_size = 6
-        self.number_of_top_items =6
-        self.rec_repeatability_of_item = 1
+        self.group_size = 3
+        self.number_of_top_items =3
+        self.rec_repeatability_of_item = 2
 
         '''
         Fairness_measure Settings

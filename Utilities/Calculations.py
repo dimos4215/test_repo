@@ -360,11 +360,10 @@ def get_top_combination(groups, fairness_measure, item_stats, log):
 
         #print('item_times = Counter(best_comb)',item_times)
         for item in item_times:
-            item_stats[item]['number_of_times']+=item_times[item]
+            item_stats[item]['number_of_times_given']+=item_times[item]
             item_stats[item]['number_of_groups'] += 1
 
-
-            log.log_dynamic_metric(metric_times_item_rec, item,item_stats[item]['number_of_times'])
+            log.log_dynamic_metric(metric_times_item_rec, item,item_stats[item]['number_of_times_given'])
             log.log_dynamic_metric(metric_groups_item_rec, item, item_stats[item]['number_of_groups'])
 
         groups[group_id].best_combination[best_comb] = best_score

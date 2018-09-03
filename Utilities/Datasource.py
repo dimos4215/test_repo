@@ -68,6 +68,17 @@ class Datasource:
                 ind += 1
         print('all items:', len(list(self.item_to_index_map.keys())))
 
+        # keep item stats only for items that can be given to users
+        for item in self.dataframe:
+            if item != 'user':
+                item_availability=self.dataframe[self.dataframe[item] > 0 ][item].count()
+                #if item_availability > 0:
+                self.items_stats_map[item]={'availability': item_availability,
+                                            'number_of_times_given':0,
+                                            'number_of_groups':0
+                                            }
+
+
 
 
 '''
