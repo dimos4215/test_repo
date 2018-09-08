@@ -2,6 +2,9 @@ import itertools
 import numpy as np
 import os
 
+import Upini_thesis_project.entities.GroupOfUsers
+from Upini_thesis_project.entities import GroupOfUsers
+
 '''
 It takes the index_to_user_obj_map and for each user based on the constrain matrix returns for each user the
 available objects
@@ -9,70 +12,67 @@ available objects
 
 
 def load_possible_items(users, constrain_matrix, dataframe):
-    constrain_flag =0
+    constrain_flag = 0
 
     for i in users:
         temp = constrain_matrix.loc[users[i].id, :]
 
         for item in temp[(temp != constrain_flag)].keys():
             rating = dataframe.loc[users[i].id, item]
-            users[i].possible_items[item] = rating
-            users[i].possible_items_list.append(item)
+            users[i].map_possible_items_ratings[item] = rating
+            #users[i].possible_items_list.append(item) :todo remove list
 
 
 '''
 1.Iterate over all groups 
-2.Get the availabke items of each user of each group
-3.Create a dictionary for all the users of the group
-4.Select top N items from each user of thr group
+2.Get the available items of each user of each group
+3.Get a shorted dict for each user with the top items (to user object)
+4.Calculate the factor for the satisfaction of each user (to user object)
 
 '''
 
 
-def select_top_items(number_of_top_items, users, group):
-    """
-    :type group: group.group_map
-    """
+def select_top_items(number_of_top_items, all_users_map, groups_map): #:Done
+
     n = number_of_top_items
-    for group_id in group:
-        all_items_of_users = {}
-        for user_id in group[group_id].users:
-            user_obj = users[user_id]
-            all_items_of_users[user_obj.id] = user_obj.possible_items
+    for group_id in groups_map:
 
-        frl = all_items_of_users
-        top_list = {}
+        for user_id in groups_map[group_id].users:
+            user_obj = all_users_map[user_id]
+            tmp_dict = user_obj.map_possible_items_ratings
+            user_satisfaction_factor=0
 
-        for i in frl:
-            top_list[i] = {k: frl[i][k] for k in sorted(frl[i], key=lambda k: -frl[i][k])[:n]}
+            top = {k: tmp_dict[k] for k in sorted(tmp_dict, key=lambda k: -tmp_dict[k])[:n]}
 
-        group[group_id].top_items = top_list
+            for item in top:
+                user_satisfaction_factor += top[item]
+
+            user_obj.map_top_items_ratings = dict(top)
+            user_obj.satisfaction_factor = user_satisfaction_factor
+
+
 
 
 '''
 1.Iterate over all groups 
-2.Get the top_items of each group
-3.Create a list with the unique recommendation items for group
-4.expand list based on the number of times an item can be given
+2.Iterate over all users of each group
+3.Get top K items of each user and create a list with the unique recommendation items for the group 
+
 '''
 
 
-def create_group_recommendation_list(group, repeatability_of_item):
-    """
-    :type group: group.group_map
-    """
+def create_group_recommendation_list_of_available_items(groups_map, all_users_map): #:Done
+    for group_id in groups_map:
 
-    for group_id in group:
-        user_top_choices = group[group_id].top_items
-        temp_rlist_of_items = []
-        for user in user_top_choices:
-            for item in user_top_choices[user].keys():
-                temp_rlist_of_items.append(item)
+        tmp_pool_of_recommendable_items = []
+        for user_id in groups_map[group_id].users:
+            user_top_items_list = all_users_map[user_id].map_top_items_ratings.keys()
 
-        group[group_id].rlist_of_items = list(set(temp_rlist_of_items))
-        if repeatability_of_item > 1:
-            for rep in range(0, repeatability_of_item):
-                group[group_id].rlist_of_items += list(set(temp_rlist_of_items))
+            for item in user_top_items_list:
+                tmp_pool_of_recommendable_items.append(item)
+
+        groups_map[group_id].rlist_of_items = list(set(tmp_pool_of_recommendable_items))
+
 
 
 '''
@@ -85,12 +85,11 @@ def combinations_generator(list, repeat):
     # https://www.mathplanet.com/education/algebra-2/discrete-mathematics-and-probability/permutations-and-combinations
     item_combination_map = {}
 
-    for item_combination in itertools.permutations(list, repeat):
-
-        if item_combination not in item_combination_map:
-            item_combination_map[item_combination]=''
+    for item_combination in itertools.combinations(list, repeat): #:todo changed permutation to combination
+        item_combination_map[item_combination] = ''
 
     return item_combination_map
+
 
 '''
 1.Generate all the permutations of items
@@ -99,6 +98,7 @@ def combinations_generator(list, repeat):
 
 def combinations_generator_raw(list2, repeat):
     return itertools.permutations(list2, repeat)
+
 
 '''
 back up

@@ -58,15 +58,15 @@ dataset = Datasource(cfg.dataframe_dir,cfg.constrain_dir)
 dataset.get_users()
 dataset.get_items()
 
-item_stats = dataset.items_stats_map
-
-map_alluser_obj = dataset.index_to_user_obj_map
-
+item_stats = dataset.items_stats_map #todo make analysis of item stats
+all_users_map = dataset.index_to_user_obj_map
 
 
-#load for each user the available items
+
+
+#load for each user the available items #:
 log.log_task('load_possible_items')
-Utils.load_possible_items(map_alluser_obj, dataset.constrains, dataset.dataframe)
+Utils.load_possible_items(all_users_map, dataset.constrains, dataset.dataframe)
 
 
 #generate group
@@ -75,44 +75,56 @@ log.log_task('GroupGenerator')
 group = GroupGenerator(dataset, cfg.group_size)
 group.generate_dissimilar_group()
 
+
+
+
 log.log_task('select_top_items')
-Utils.select_top_items(cfg.number_of_top_items, map_alluser_obj, group.group_map)
+Utils.select_top_items(cfg.number_of_top_items, all_users_map, group.group_map) #DONE ?
 
 
+log.log_task('create_group_recommendation_list_of_available_items')
+Utils.create_group_recommendation_list_of_available_items(group.group_map, all_users_map)#:todo changed to create single list of items
 
-
-
-log.log_task('create_group_recommendation_list')
-Utils.create_group_recommendation_list(group.group_map, cfg.rec_repeatability_of_item)
-
-
-sleep(0.1)
+#===================================DONE==================================================================^^^^^^^
+sleep(0.3)
 print('==================Calculations======================================')
 
 
-log.log_task('combination_test2')
-Calculations.combination_test(group.group_map, map_alluser_obj, log)
+log.log_task('combination_test_brute')
+Calculations.combination_test_brute(group.group_map, all_users_map, log, cfg) #:todo change
 sleep(0.1)
 
+log.log_task('combination_test_greedy')
+Calculations.combination_test_greedy(group.group_map, all_users_map, log, cfg) #:todo change
+sleep(0.1)
+
+Calculations.combination_results(group.group_map,log)
+
+log.log_task('top_combination_analysis')
+Calculations.top_combination_analysis(group.group_map, item_stats, log,all_users_map) #:todo change
 
 
+log.end()
+'''
 
 log.log_task('user_satisfaction_prep')
-Calculations.user_satisfaction_prep(group.group_map, map_alluser_obj)
+Calculations.user_satisfaction_prep(group.group_map, all_users_map) #:todo change
 
 
 log.log_task('group_feature_gereration')
-Calculations.group_feature_gereration(group.group_map)
+Calculations.group_feature_gereration(group.group_map) #:todo change
 
 
-log.log_task('get_top_combination')
-Calculations.get_top_combination(group.group_map, cfg.fairness_measure, item_stats, log)
+log.log_task('top_combination_analysis')
+Calculations.top_combination_analysis(group.group_map, cfg.fairness_measure, item_stats, log) #:todo change
 
 
 log.end()
 
-#:todo remove design temp code
+#:todo remove design temp code'''
+'''
 
+'''
 '''
 backup 
 
@@ -168,25 +180,25 @@ Utils.select_top_items(cfg.number_of_top_items, index_to_user_obj_map, group.gro
 
 
 #create_group_recommendation_list_start= time.clock()
-log.log_task('create_group_recommendation_list')
-Utils.create_group_recommendation_list(group.group_map, cfg.rec_repeatability_of_item)
+log.log_task('create_group_recommendation_list_of_available_items')
+Utils.create_group_recommendation_list_of_available_items(group.group_map, cfg.rec_repeatability_of_item)
 #print(group.group_map[0].rlist_of_items)
 
 
 
 #create_group_recommendation_list_end= time.clock()
 
-#print('create_group_recommendation_list time:',create_group_recommendation_list_end-create_group_recommendation_list_start)
+#print('create_group_recommendation_list_of_available_items time:',create_group_recommendation_list_end-create_group_recommendation_list_start)
 sleep(0.1)
 print('==================Calculations======================================')
 
 #calcs_start= time.clock()
-log.log_task('combination_test')
-Calculations.combination_test(group.group_map, index_to_user_obj_map)
+log.log_task('combination_test_brute')
+Calculations.combination_test_brute(group.group_map, index_to_user_obj_map)
 
 #calc1= time.clock()
 sleep(0.1)
-#print('combination_test time:',calc1-calcs_start)
+#print('combination_test_brute time:',calc1-calcs_start)
 
 
 
@@ -200,10 +212,10 @@ Calculations.group_feature_gereration(group.group_map)
 #calc3= time.clock()
 #print('group_feature_gereration time:',calc3-calc2)
 
-log.log_task('get_top_combination')
-Calculations.get_top_combination(group.group_map, cfg.fairness_measure)
+log.log_task('top_combination_analysis')
+Calculations.top_combination_analysis(group.group_map, cfg.fairness_measure)
 #calc4= time.clock()
-#print('get_top_combination time:',calc4-calc3)
+#print('top_combination_analysis time:',calc4-calc3)
 
 #print('Total Time',time.clock()-init_time)
 

@@ -17,11 +17,11 @@ class Config:
         Filtering data settings, Recommender split sets and show visualizations setting
         '''
 
-        self.min_std_of_item_ratings = 0.8
+        self.min_std_of_item_ratings = 0.5
         self.min_num_of_item_ratings = 50
-        self.min_std_of_user_ratings = 0.8
+        self.min_std_of_user_ratings = 0.1
         self.min_num_of_user_ratings = 50
-        self.test_size = 0.10
+        self.test_size = 0.35
         self.show_charts = False
 
 
@@ -37,10 +37,18 @@ class Config:
             2.number_of_top_items: the number of top K items that would be recommendable to a user 
                                    from all the available items
             3.rec_repeatability_of_item : is the max number of users that can get the same item
+            4.the percentage of users who have seen the item
         '''
-        self.group_size = 3
-        self.number_of_top_items =3
-        self.rec_repeatability_of_item = 2
+        self.group_size = 4
+        self.number_of_top_items = 6
+        self.number_of_rec_items = 5
+        self.threshold_cov=0.9
+        self.number_of_min_covered_items = 3
+
+        self.greedy_coverage_factor = 20.5
+        self.greedy_ratings_factor = 0.5
+        self.boost_factor = 1.6
+        self.max_iterations = 100
 
         '''
         Fairness_measure Settings
@@ -48,7 +56,7 @@ class Config:
             2.variance
             3.min_max_ratio
         '''
-        self.fairness_measure = 'least_misery'
+        self.fairness_measure = 'min_max_ratio'
 
 
         '''
@@ -60,7 +68,7 @@ class Config:
         self.dataframe_dir = self.dataframe_fname
         self.constrain_dir = self.dataframe_fname+'_constrains'
         # self.dataframe_dir = 'files/1_raw_data/dt'
-        # self.constrain_dir = 'files/1_raw_data/constrains' :todo remove test dirs
+        # self.constrain_dir = 'files/1_raw_data/constrains' #:todo remove test dirs
         self.log_file_name()
 
     def __str__(self):
@@ -77,7 +85,7 @@ class Config:
     def dfrm_file_name(self):
 
         string = 'df_'
-        string += 'itms_'  + str(self.min_std_of_item_ratings)
+        string += 'itms_' + str(self.min_std_of_item_ratings)
         string += '_itmn_' + str(self.min_num_of_item_ratings)
         string += '_urms_' + str(self.min_std_of_user_ratings)
         string += '_urmn_' + str(self.min_num_of_user_ratings)
@@ -91,7 +99,8 @@ class Config:
 
         string += 'grp_sz_' + str(self.group_size)
         string += '_top_it_' + str(self.number_of_top_items)
-        string += '_item_rep_' + str(self.rec_repeatability_of_item)
+        string += '_item_rec_' + str(self.number_of_rec_items)
+        string += '_item_con_' + str(self.number_of_min_covered_items)
 
         string += '.txt'
         self.log_dir = string

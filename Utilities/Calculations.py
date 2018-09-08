@@ -3,11 +3,6 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 from Upini_thesis_project.Utilities.ProgressBar import ProgressBar
-import sys
-from collections import Counter
-import itertools
-
-NUM_CORE = 4  # set to the number of cores you want to use
 
 '''
 1.Iterate over all groups
@@ -17,358 +12,267 @@ NUM_CORE = 4  # set to the number of cores you want to use
 '''
 
 
-def combination_test(groups_map, usersobj, log):
-
+def combination_test_brute(groups_map, users_map, log, conf_object):
+    size_of_recommendation_list = conf_object.number_of_rec_items
+    threshold_cov = conf_object.threshold_cov
+    fairness_mes = conf_object.fairness_measure
+    min_covered_items = conf_object.number_of_min_covered_items
     number_of_all_groups = len(list(groups_map.keys()))
-
     log.log_static_metric('number_of_all_groups', number_of_all_groups)
+    log.log_static_metric('fairness_mes', fairness_mes)
 
     progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
 
-
-    print('number_of_all_groups:', number_of_all_groups)
+    print('number_of_all_groups:', number_of_all_groups)  #:todo ADD LOGGING OF GENERATED/valid combinations
 
     for group_id in groups_map:
-        users_group_index = groups_map[group_id].users
-        number_of_users = len(users_group_index)
-        item_combination_list = Utils.combinations_generator(groups_map[group_id].rlist_of_items, number_of_users)
+        users_ids = groups_map[group_id].users
+        item_combination_list = Utils.combinations_generator(groups_map[group_id].rlist_of_items,
+                                                             size_of_recommendation_list)
+
         progress.current += 1
         progress()
-        tested_combinations = len(item_combination_list)
-        log.log_static_metric('tested_combinations', tested_combinations)
+
+        total_combinations = 0
         valid_combinations = 0
-        for comb in item_combination_list:
-            metric = 0
-            rating_list = []
-            pass_flag = True
-
-            for user_group_index, item in enumerate(comb):
-                temp_user_obj = usersobj[users_group_index[user_group_index]]
-
-                if item in temp_user_obj.possible_items:
-                    rating = temp_user_obj.possible_items[item]
-                    metric += rating
-                    rating_list.append(rating)
-
-                else:
-                    pass_flag = not pass_flag
-                    break
-
-            if pass_flag:
-                groups_map[group_id].result_obj[comb] = {'rating_list': rating_list}
-                valid_combinations+=1
-        log.log_static_metric('valid_combinations', valid_combinations)
-    progress.done()
-
-
-def combination_test2(groups_map, usersobj, log) :#:todo remove combination_test2
-
-    number_of_all_groups = len(list(groups_map.keys()))
-
-    log.log_static_metric('number_of_all_groups', number_of_all_groups)
-
-    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
-
-
-    print('number_of_all_groups:', number_of_all_groups)
-
-    for group_id in groups_map:
-        users_group_index = groups_map[group_id].users
-        number_of_users = len(users_group_index)
-        item_combination_list = Utils.combinations_generator_raw(groups_map[group_id].rlist_of_items, number_of_users)
-        item_combination_map={}
-        progress.current += 1
-        #progress()
-        #tested_combinations = len(item_combination_list)
-        #log.log_static_metric('tested_combinations', tested_combinations)
-
-        gen_comb=0
-        test_comb = 0
-        valid_combinations = 0
-        broken_loops=0
-        for comb in item_combination_list:
-            #print('comb',comb)
-            gen_comb+=1
-            if comb in item_combination_map:
-                broken_loops+=1
-                break
-            else:
-                item_combination_map[comb]=''
-                test_comb+=1
-            metric = 0
-            rating_list = []
-            pass_flag = True
-
-            for user_group_index, item in enumerate(comb):
-                temp_user_obj = usersobj[users_group_index[user_group_index]]
-
-                if item in temp_user_obj.possible_items:
-                    rating = temp_user_obj.possible_items[item]
-                    metric += rating
-                    rating_list.append(rating)
-
-                else:
-                    pass_flag = not pass_flag
-                    break
-
-            if pass_flag:
-                groups_map[group_id].result_obj[comb] = {'rating_list': rating_list}
-                valid_combinations+=1
-        log.log_static_metric('valid_combinations', valid_combinations)
-        print('group_id',group_id,'gen_comb',gen_comb,'test_comb',test_comb,'valid_combinations',valid_combinations,'broken_loops',broken_loops,'item_combination_map',len(item_combination_map.keys()))
-    progress.done()
-
-
-
-
-def combination_test3(groups_map, usersobj, log): #:todo remove combination_test3
-
-    number_of_all_groups = len(list(groups_map.keys()))
-
-    log.log_static_metric('number_of_all_groups', number_of_all_groups)
-
-    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
-
-
-    print('number_of_all_groups:', number_of_all_groups)
-
-    for group_id in groups_map:
-        users_group_index = groups_map[group_id].users
-        number_of_users = len(users_group_index)
-
-
-        progress.current += 1
-        progress()
-        #tested_combinations = len(item_combination_list)
-        #log.log_static_metric('tested_combinations', tested_combinations)
-
-        item_combination_map = {}
-
-
-
-        gen_comb=0
-        test_comb = 0
-        valid_combinations = 0
-        broken_loops=0
-        for comb in itertools.permutations(groups_map[group_id].rlist_of_items, number_of_users):
-            #print('comb',comb)
-            gen_comb+=1
-            if comb in item_combination_map:
-                broken_loops+=1
-                pass
-            else:
-                item_combination_map[comb]=''
-                test_comb+=1
-            metric = 0
-            rating_list = []
-            pass_flag = True
-
-            for user_group_index, item in enumerate(comb):
-                temp_user_obj = usersobj[users_group_index[user_group_index]]
-
-                if item in temp_user_obj.possible_items:
-                    rating = temp_user_obj.possible_items[item]
-                    metric += rating
-                    rating_list.append(rating)
-
-                else:
-                    pass_flag = not pass_flag
-                    break
-
-            if pass_flag:
-                groups_map[group_id].result_obj[comb] = {'rating_list': rating_list}
-                valid_combinations+=1
-        log.log_static_metric('valid_combinations', valid_combinations)
-        print('group_id',group_id,'gen_comb',gen_comb,'test_comb',test_comb,'valid_combinations',valid_combinations,'broken_loops',broken_loops,'item_combination_map',len(item_combination_map.keys()))
-    progress.done()
-
-
- #:todo remove combination_test backup
-'''
-back up
-    
-
-    
-====================(original)====================
-def combination_test(groups, usersobj):
-    number_of_all_groups = len(list(groups.keys()))
-
-    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
-
-    print('number_of_all_groups:', number_of_all_groups)
-
-    for group_id in groups:
-        users_group_index = groups[group_id].users
-        number_of_users = len(users_group_index)
-        item_combination_list = Utils.combinations_generator(groups[group_id].rlist_of_items, number_of_users)
-        progress.current += 1
-        progress()
-
-        for comb in item_combination_list:
-            metric = 0
-            rating_list = []
-            pass_flag = True
-
-            for user_group_index, item in enumerate(comb):
-                temp_user_obj = usersobj[users_group_index[user_group_index]]
-
-                if item in temp_user_obj.possible_items_list:
-                    rating = temp_user_obj.possible_items[item]
-                    metric += rating
-                    rating_list.append(rating)
-
-                else:
-                    pass_flag = not pass_flag
-                    break
-
-            if pass_flag:
-                groups[group_id].result_obj[comb] = {'rating_list': rating_list}
-
-    progress.done()
-    
-    
-====================(improvement with dict hash/ low results)====================    
-def combination_test(groups, usersobj):
-
-    number_of_all_groups = len(list(groups.keys()))
-
-    progress = ProgressBar(number_of_all_groups, fmt=ProgressBar.FULL)
-
-    print('number_of_all_groups:',number_of_all_groups)
-
-    for group_id in groups:
-        users_group_list = groups[group_id].users
-        number_of_users = len(users_group_list)
-        item_combination_list = Utils.combinations_generator(groups[group_id].rlist_of_items, number_of_users)
-        progress.current += 1
-        progress()
-
-        temp_map_user_index_to_user_object = {}
-        temp_map_user_index_to_user_possible_item_set= {}
-        #print('group_id',group_id)
-        for index in range(number_of_users):
-
-            temp_map_user_index_to_user_object[index] = usersobj[users_group_list[index]]
-
-        for comb in item_combination_list:
-            metric = 0
-            rating_list = []
-            pass_flag = True
-
-
-
-            for user_index, item in enumerate(comb):
-
-
-                temp_user_obj = temp_map_user_index_to_user_object[user_index]
-
-                if item in temp_user_obj.possible_items:
-                    rating = temp_user_obj.possible_items[item]
-                    metric += rating
-                    rating_list.append(rating)
-
-                else:
-                    pass_flag = not pass_flag
-                    break
-
-            if pass_flag:
-                groups[group_id].result_obj[comb] = {'rating_list': rating_list}
-
-
-    progress.done()    
-'''
-
-
-def user_satisfaction_prep(groups, usersobj):
-    for group_id in groups:
-        users_top_items = groups[group_id].top_items
-        users_group_index = groups[group_id].users
-
-        '''
-        Calculate total rating from top item list
-        '''
-        for g_user_index in users_group_index:
-            user_id = usersobj[g_user_index].id
-
-            item_rating = users_top_items[user_id]
-            temp_sum = 0
-
-            for item in item_rating:
-                temp_sum += item_rating[item]
-
-            usersobj[g_user_index].sum_of_top_ratings = temp_sum
-
-        '''
-        For each combination calculate the satisfaction per item/user
-        '''
-        group_combinations = groups[group_id].result_obj
-
-        for comb in group_combinations:
-            rating_list = group_combinations[comb]['rating_list']
-            group_combinations[comb]['calculated_list'] = []
-
-            '''
-            get the total of each user and divide rating/total_sum_of_top_items
-            '''
-            for user_combination_index, rating in enumerate(rating_list):
-                sum_of_top_ratings = usersobj[users_group_index[user_combination_index]].sum_of_top_ratings
-                ratio = rating / sum_of_top_ratings
-                group_combinations[comb]['calculated_list'].append(ratio)
-
-
-'''
-1.Iterate over all groups
-2.Iterate over each combination 
-3.calculate group metrics
-'''
-
-
-def group_feature_gereration(groups):
-    for group_id in groups:
-        group_combinations = groups[group_id].result_obj
-
-        for comb in group_combinations:
-            rating_list = group_combinations[comb]['calculated_list']
-
-            group_combinations[comb]['least_misery'] = min(rating_list)
-            group_combinations[comb]['variance'] = np.var(rating_list)
-            group_combinations[comb]['min_max_ratio'] = min(rating_list)
-
-
-def get_top_combination(groups, fairness_measure, item_stats, log):
-    metric_times_item_rec='Item_id,Number_of_times_recommended'
-    metric_groups_item_rec='Item_id,Number_of_groups_recommended'
-
-    for group_id in groups:
-        group_combinations = groups[group_id].result_obj
-
         best_comb = None
-        best_score = -1111111
+        best_score = -1
 
-        stat_metric_best_comb = 'group_id_'+str(group_id)+' satisfaction'
+        fair_comb = None
+        fair_score = -1
 
-        for comb in group_combinations:
-            score = group_combinations[comb][fairness_measure]
+        for comb in item_combination_list:
+            metric = {}
+            total_combinations += 1
+            tmp_satisfaction_map = {}
+            tmp_usr_coverage_map = {}
+            for user_id in users_ids:
+                tmp_satisfaction_map[user_id] = 0
+                tmp_usr_coverage_map[user_id] = 0
 
-            log.log_static_metric(stat_metric_best_comb, score)
+            for item in comb:
+                item_avail = 0
 
-            if best_score < score:
-                best_score = score
+                for user_id in users_ids:
+                    user_obj = users_map[user_id]
+
+                    if item not in user_obj.map_possible_items_ratings:
+                        item_avail += 1
+
+                    elif item in user_obj.map_top_items_ratings:
+                        rating = user_obj.map_top_items_ratings[item]
+                        tmp_satisfaction_map[user_id] += rating / user_obj.satisfaction_factor
+                        tmp_usr_coverage_map[user_id] += 1
+
+                if item_avail / len(users_ids) > threshold_cov:
+                    break
+
+            result_list = list(tmp_satisfaction_map.values())
+            metric[fairness_mes] = metric_calculation(result_list,fairness_mes)
+
+            if user_coverage_check(tmp_usr_coverage_map, min_covered_items):
+                valid_combinations += 1
+                if fair_score < metric[fairness_mes]:
+                    fair_score = metric[fairness_mes]
+                    fair_comb = comb
+
+            if best_score < metric[fairness_mes]:
+                best_score = metric[fairness_mes]
                 best_comb = comb
 
-        item_times = Counter(best_comb)
+        groups_map[group_id].result_obj['best_comb'] = [best_comb, best_score]
+        groups_map[group_id].result_obj['fair_comb'] = [fair_comb, fair_score]
+        # LOG result
+        header = 'group_id,total_combinations,valid_combinations'
+        key = str(group_id) + ',' + str(total_combinations)
+        log.log_dynamic_metric(header, key, valid_combinations)
 
-        #print('item_times = Counter(best_comb)',item_times)
-        for item in item_times:
-            item_stats[item]['number_of_times_given']+=item_times[item]
-            item_stats[item]['number_of_groups'] += 1
+    progress.done()
 
-            log.log_dynamic_metric(metric_times_item_rec, item,item_stats[item]['number_of_times_given'])
-            log.log_dynamic_metric(metric_groups_item_rec, item, item_stats[item]['number_of_groups'])
 
-        groups[group_id].best_combination[best_comb] = best_score
+def metric_calculation(satisfaction_list,fairness_mes):
+    if fairness_mes == 'least_misery':
+        return min(satisfaction_list)
+    elif fairness_mes == 'variance':
+        return 1 / np.var(satisfaction_list)
+    elif fairness_mes == 'min_max_ratio':
+        return min(satisfaction_list) / max(satisfaction_list)
 
-        #print('-->group_id', group_id, 'best_comb', best_comb, 'best_score', best_score)
+
+def user_coverage_check(coverage_map, min_covered_items):
+    for user in coverage_map:
+        covered_items = coverage_map[user]
+        if covered_items < min_covered_items:
+            return False
+    return True
+
+
+
+def combination_test_greedy(groups_map, users_map, log, conf_object):
+    n = conf_object.number_of_rec_items
+    ratings_factor = conf_object.greedy_ratings_factor
+    coverage_factor = conf_object.greedy_coverage_factor
+    fairness_mes = conf_object.fairness_measure
+    min_covered_items = conf_object.number_of_min_covered_items
+    boost_factor = conf_object.boost_factor
+    max_iterations = conf_object.max_iterations
+
+    log.log_static_metric('min_covered_items', min_covered_items)
+    log.log_static_metric('ratings_factor', ratings_factor)
+    log.log_static_metric('coverage_factor', coverage_factor)
+
+
+    for group_id in groups_map:
+        users_ids = groups_map[group_id].users
+        tmp_item_stats = {}
+        tmp_item_score = {}
+
+        #GENERATE Initial Combination
+        for user_id in users_ids:
+            user_obj = users_map[user_id]
+            item_ratings = user_obj.map_top_items_ratings
+
+            for item in item_ratings:
+                if item not in tmp_item_stats:
+                    tmp_item_stats[item] = {'users': 1 / len(users_ids), 'ratings': [item_ratings[item]]}
+
+                else:
+                    tmp_item_stats[item]['users'] += 1 / len(users_ids)
+                    tmp_item_stats[item]['ratings'].append(item_ratings[item])
+
+        for item in tmp_item_stats:
+            tmp_item_score[item] = ratings_factor * tmp_item_stats[item]['users']
+            tmp_item_score[item] += coverage_factor * np.mean(tmp_item_stats[item]['ratings'])
+
+        # ITERATE until constrain reached
+        score = -1
+        iterations=0
+        while score < 0 and max_iterations>iterations:
+            iterations+=1
+            for item in users_map[user_id].map_top_items_ratings:
+                tmp_item_score[item] = tmp_item_score[item] * boost_factor
+                top = {k: tmp_item_score[k] for k in sorted(tmp_item_score, key=lambda k: -tmp_item_score[k])[:n]}
+                comb = list(top.keys())
+                score, user_id = calculate_combination_score(comb, users_ids, users_map, min_covered_items,
+                                                             fairness_mes)
+        groups_map[group_id].result_obj['greedy_comb'] = [comb, score]
+
+
+
+def calculate_combination_score(comb,users_ids,users_map,min_covered_items,fairness_mes):
+    tmp_satisfaction_map = {}
+    tmp_usr_coverage_map = {}
+    for user_id in users_ids:
+        tmp_satisfaction_map[user_id] = 0
+        tmp_usr_coverage_map[user_id] = 0
+
+    for item in comb:
+        for user_id in users_ids:
+            user_obj = users_map[user_id]
+
+            if item in user_obj.map_top_items_ratings:
+                rating = user_obj.map_top_items_ratings[item]
+                tmp_satisfaction_map[user_id] += rating / user_obj.satisfaction_factor
+                tmp_usr_coverage_map[user_id] += 1
+
+    result_list = list(tmp_satisfaction_map.values())
+    # score = 1 / np.var(result_list)
+    if user_coverage_check(tmp_usr_coverage_map, min_covered_items):
+        score = metric_calculation(result_list, fairness_mes)
+        return score,None
+    else:
+        return -1,min(tmp_usr_coverage_map, key=tmp_usr_coverage_map.get)
+
+
+def combination_results(groups_map,  log):
+    combination_type_list= []
+    for comb_type in groups_map[0].result_obj:
+        combination_type_list.append(comb_type)
+        header = 'Combination Result\ngroup_id'
+        header += ',' + comb_type + '_score'
+
+    for group_id in groups_map:
+        group_combinations = groups_map[group_id].result_obj
+        comb_score = None
+        for comb_type in combination_type_list:
+            if comb_score == None:
+                comb_score = str(group_combinations[comb_type][1])
+            else:
+                comb_score += ','+str(group_combinations[comb_type][1])
+
+        log.log_dynamic_metric(header, group_id, comb_score)
+
+
+
+def top_combination_analysis(groups_map, item_stats, log, users_map):
+    for comb_type in groups_map[0].result_obj:
+
+        for group_id in groups_map:
+            users_ids = groups_map[group_id].users
+            group_combinations = groups_map[group_id].result_obj
+            comb = group_combinations[comb_type][0]
+
+            if comb == None:
+                break
+
+            for item in comb:
+                item_stats[item]['number_of_times_given'] += 1
+                satisfied_users = 0
+                for user_id in users_ids:
+                    user_obj = users_map[user_id]
+
+                    '''
+                    if top items +1 satisfied user else just rating score
+                    '''
+                    if item in user_obj.map_top_items_ratings:
+                        item_stats[item]['rating_list'].append(user_obj.map_top_items_ratings[item])
+                        satisfied_users += 1
+                    elif item in user_obj.map_possible_items_ratings:
+                        item_stats[item]['rating_list'].append(user_obj.map_possible_items_ratings[item])
+
+                item_stats[item]['satisfied_users'].append(satisfied_users)
+
+        item_stats_analysis(comb_type,item_stats, log)
+        item_stats_reset(item_stats)
+
+
+
+
+
+
+def item_stats_analysis(calaulation_type,item_stats, log):
+    # LOG result
+    header = calaulation_type +'\n'
+    header += 'item_id,number_of_times_given,number_of_groups_offered,average_rating,rating_variation,average_covered_users,variation_covered_users'
+    for item in item_stats:
+        num_of_times = item_stats[item]['number_of_times_given']
+        if num_of_times > 0:
+            avg_rating = np.mean(item_stats[item]['rating_list'])
+            var_rating = np.var(item_stats[item]['rating_list'])
+            avg_users_covered = np.mean(item_stats[item]['satisfied_users'])
+            var_users_covered = np.var(item_stats[item]['satisfied_users'])
+        else:
+            avg_rating = 0
+            var_rating = 0
+            avg_users_covered = 0
+            var_users_covered = 0
+
+        key = str(item) + ',' + str(num_of_times)
+        key += ',' + str(avg_rating)
+        key += ',' + str(var_rating)
+        key += ',' + str(avg_users_covered)
+
+        log.log_dynamic_metric(header, key, var_users_covered)
+
+
+def item_stats_reset(item_stats):
+    for item in item_stats:
+        item_stats[item]['number_of_times_given'] = 0
+        item_stats[item]['rating_list'] = []
+        item_stats[item]['satisfied_users'] = []
+
+
+
 
 
 '''

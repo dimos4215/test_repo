@@ -57,11 +57,7 @@ class Logger:
         res_separator = '\n\n====================================================\n'
         if os.path.exists(self.log_dir):
             os.remove(self.log_dir)
-
-
         f = open(self.log_dir, "a")
-
-        #f.write(self.config_obj)# write configs settings
 
         for task in self.task_map:
             f.write(task + self.task_map[task]+'\n')
@@ -72,8 +68,6 @@ class Logger:
             for value in self.static_metric_map[metric]:
                 f.write(str(value)+'\n')
 
-        print('self.dynamic_metric_map',self.dynamic_metric_map)
-        rowformat='{},{}\n'
         for metric in self.dynamic_metric_map:
 
             f.write(res_separator+metric+'\n')

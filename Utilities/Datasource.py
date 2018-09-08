@@ -22,16 +22,16 @@ class Datasource:
         self.load_df()
         self.load_constrains()
         self.userslist = []
-        self.item_to_index_map = {} # maps items to indexes of arrays
-        self.index_to_user_obj_map = {} # maps user arrays indexes to user objects
-        self.items_stats_map ={} # maps object stats
+        self.item_to_index_map = {}  # maps items to indexes of arrays
+        self.index_to_user_obj_map = {}  # maps user arrays indexes to user objects
+        self.items_stats_map = {}  # maps object stats
 
     def load_df(self):
         '''
         Loads the utility matrix
         '''
         # self.df = pd.read_csv(self.dir)
-        print('self.dir',self.dir)
+        print('self.dir', self.dir)
         self.dataframe = pd.read_csv(self.dir, index_col='user')
         print("data imported!")
 
@@ -52,8 +52,7 @@ class Datasource:
             self.userslist.append(u)
             self.index_to_user_obj_map[ind] = User(u)
             ind += 1
-        print('all users:',len(self.userslist))
-
+        print('all users:', len(self.userslist))
 
     def get_items(self):
         '''
@@ -64,21 +63,17 @@ class Datasource:
         for u in self.dataframe:
             if u != 'user':
                 self.item_to_index_map[u] = ind
-                self.items_stats_map[u]={'number_of_groups':0,'number_of_times':0}
+                self.items_stats_map[u] = {'number_of_groups': 0, 'number_of_times': 0}
                 ind += 1
         print('all items:', len(list(self.item_to_index_map.keys())))
 
         # keep item stats only for items that can be given to users
         for item in self.dataframe:
             if item != 'user':
-                item_availability=self.dataframe[self.dataframe[item] > 0 ][item].count()
-                #if item_availability > 0:
-                self.items_stats_map[item]={'availability': item_availability,
-                                            'number_of_times_given':0,
-                                            'number_of_groups':0
-                                            }
-
-
+                item_availability = self.dataframe[self.dataframe[item] > 0][item].count()
+                # if item_availability > 0:
+                self.items_stats_map[item] = dict(availability=item_availability, number_of_times_given=0,
+                                                  rating_list=[], satisfied_users=[])
 
 
 '''
