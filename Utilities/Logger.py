@@ -62,14 +62,15 @@ class Logger:
         for task in self.task_map:
             f.write(task + self.task_map[task]+'\n')
 
+
         for metric in self.static_metric_map:
             f.write(res_separator+metric+'\n')
 
             for value in self.static_metric_map[metric]:
                 f.write(str(value)+'\n')
 
-        for metric in self.dynamic_metric_map:
 
+        for metric in self.dynamic_metric_map:
             f.write(res_separator+metric+'\n')
 
             for metrickey in self.dynamic_metric_map[metric]:

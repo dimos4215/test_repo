@@ -1,6 +1,7 @@
 from Upini_thesis_project.entities.GroupOfUsers import GroupOfUsers
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
+import random as rd
 
 
 class GroupGenerator:
@@ -15,7 +16,6 @@ class GroupGenerator:
         self.sim_matrix_stats = cosine_similarity(datasource_obj.dataframe)
         self.group_number = 0
         self.used_flag_val = -1000
-
 
     def generate_similar_group(self):
 
@@ -60,9 +60,6 @@ class GroupGenerator:
 
             self.group_map[self.group_number] = GroupOfUsers(self.group_number, grp_tmp)
             self.group_number += 1
-
-
-
 
     def generate_dissimilar_group(self):
 
@@ -115,3 +112,25 @@ class GroupGenerator:
 
 
 
+
+    def generate_random_group(self):
+        '''
+        Generate groups by randomly selecting users
+        '''
+        self.group_number = 0
+        while len(self.available_users) > 0:
+            initial_user = self.available_users[rd.randint(0, len(self.available_users)-1)]
+            self.available_users.remove(initial_user)
+            grp_tmp = []
+            grp_tmp.append(initial_user)
+
+            for j in range(0, self.grp_size - 1):
+                if len(self.available_users) > 0:
+                    next_user = self.available_users[rd.randint(0, len(self.available_users) - 1)]
+                    grp_tmp.append(next_user)
+                    self.available_users.remove(next_user)
+                else:
+                    break
+
+            self.group_map[self.group_number] = GroupOfUsers(self.group_number, grp_tmp)
+            self.group_number += 1

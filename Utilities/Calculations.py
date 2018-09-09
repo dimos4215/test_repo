@@ -1,8 +1,9 @@
 from Upini_thesis_project.Utilities import Utils
-import numpy as np
+from Upini_thesis_project.Utilities.ProgressBar import ProgressBar
 from sklearn.metrics import mean_squared_error
 from math import sqrt
-from Upini_thesis_project.Utilities.ProgressBar import ProgressBar
+import numpy as np
+import time
 
 '''
 1.Iterate over all groups
@@ -68,7 +69,7 @@ def combination_test_brute(groups_map, users_map, log, conf_object):
                     break
 
             result_list = list(tmp_satisfaction_map.values())
-            metric[fairness_mes] = metric_calculation(result_list,fairness_mes)
+            metric[fairness_mes] = metric_calculation(result_list, fairness_mes)
 
             if user_coverage_check(tmp_usr_coverage_map, min_covered_items):
                 valid_combinations += 1
@@ -90,11 +91,11 @@ def combination_test_brute(groups_map, users_map, log, conf_object):
     progress.done()
 
 
-def metric_calculation(satisfaction_list,fairness_mes):
+def metric_calculation(satisfaction_list, fairness_mes):
     if fairness_mes == 'least_misery':
         return min(satisfaction_list)
     elif fairness_mes == 'variance':
-        return 1 / np.var(satisfaction_list)
+        return 1 / (np.var(satisfaction_list) + 1)
     elif fairness_mes == 'min_max_ratio':
         return min(satisfaction_list) / max(satisfaction_list)
 
@@ -105,7 +106,6 @@ def user_coverage_check(coverage_map, min_covered_items):
         if covered_items < min_covered_items:
             return False
     return True
-
 
 
 def combination_test_greedy(groups_map, users_map, log, conf_object):
@@ -121,13 +121,14 @@ def combination_test_greedy(groups_map, users_map, log, conf_object):
     log.log_static_metric('ratings_factor', ratings_factor)
     log.log_static_metric('coverage_factor', coverage_factor)
 
-
+    start = time.clock()
     for group_id in groups_map:
         users_ids = groups_map[group_id].users
         tmp_item_stats = {}
         tmp_item_score = {}
+        iterations_list = []
 
-        #GENERATE Initial Combination
+        # GENERATE Initial Combination
         for user_id in users_ids:
             user_obj = users_map[user_id]
             item_ratings = user_obj.map_top_items_ratings
@@ -141,25 +142,39 @@ def combination_test_greedy(groups_map, users_map, log, conf_object):
                     tmp_item_stats[item]['ratings'].append(item_ratings[item])
 
         for item in tmp_item_stats:
-            tmp_item_score[item] = ratings_factor * tmp_item_stats[item]['users']
-            tmp_item_score[item] += coverage_factor * np.mean(tmp_item_stats[item]['ratings'])
+            tmp_item_score[item] = greedy_algorith_score_function(ratings_factor, coverage_factor,
+                                                                  tmp_item_stats[item]['users'],
+                                                                  tmp_item_stats[item]['ratings'])
 
         # ITERATE until constrain reached
         score = -1
-        iterations=0
-        while score < 0 and max_iterations>iterations:
-            iterations+=1
+        iterations = 0
+        while score < 0 and max_iterations > iterations:
+            iterations += 1
             for item in users_map[user_id].map_top_items_ratings:
                 tmp_item_score[item] = tmp_item_score[item] * boost_factor
                 top = {k: tmp_item_score[k] for k in sorted(tmp_item_score, key=lambda k: -tmp_item_score[k])[:n]}
                 comb = list(top.keys())
                 score, user_id = calculate_combination_score(comb, users_ids, users_map, min_covered_items,
                                                              fairness_mes)
-        groups_map[group_id].result_obj['greedy_comb'] = [comb, score]
+
+        iterations_list.append(iterations)
+        duration = time.clock() - start
+        groups_map[group_id].result_obj['greedy_comb'] = [comb, score, iterations, duration]
 
 
+def greedy_algorith_score_function(ratings_factor, coverage_factor, users, ratings_list):
+    score = ratings_factor * users
+    score += coverage_factor * np.mean(ratings_list)
+    return score
 
-def calculate_combination_score(comb,users_ids,users_map,min_covered_items,fairness_mes):
+
+'''
+CALCULATE THE SCORE OF EACH COMBINATION
+'''
+
+
+def calculate_combination_score(comb, users_ids, users_map, min_covered_items, fairness_mes):
     tmp_satisfaction_map = {}
     tmp_usr_coverage_map = {}
     for user_id in users_ids:
@@ -179,29 +194,66 @@ def calculate_combination_score(comb,users_ids,users_map,min_covered_items,fairn
     # score = 1 / np.var(result_list)
     if user_coverage_check(tmp_usr_coverage_map, min_covered_items):
         score = metric_calculation(result_list, fairness_mes)
-        return score,None
+        return score, None
     else:
-        return -1,min(tmp_usr_coverage_map, key=tmp_usr_coverage_map.get)
+        return -1, min(tmp_usr_coverage_map, key=tmp_usr_coverage_map.get)
 
 
-def combination_results(groups_map,  log):
-    combination_type_list= []
-    for comb_type in groups_map[0].result_obj:
-        combination_type_list.append(comb_type)
-        header = 'Combination Result\ngroup_id'
-        header += ',' + comb_type + '_score'
+'''
+EXPORT THE RESULT SCORE OF EACH COMBINATION
+'''
+
+
+def greedy_algorith_deviation(groups_map, log, conf_object):
+    ratings_factor = conf_object.greedy_ratings_factor
+    coverage_factor = conf_object.greedy_coverage_factor
+    fairness_mes = conf_object.fairness_measure
+    boost_factor = conf_object.boost_factor
+
+    header = 'Combination Result\n'
+    header += 'coverage_factor,ratings_factor,boost_factor,'
+    header += 'mse_from_best,mse_from_fair,average_iterations,max_iterations'
+    header += 'generation_success,duration_avg(s)'
+    list_best = []
+    list_fair = []
+    list_grdy = []
+    list_iter = []
+
+    list_time = []
+    possible_recom = 0
+    generated_recom = 0
 
     for group_id in groups_map:
         group_combinations = groups_map[group_id].result_obj
-        comb_score = None
-        for comb_type in combination_type_list:
-            if comb_score == None:
-                comb_score = str(group_combinations[comb_type][1])
-            else:
-                comb_score += ','+str(group_combinations[comb_type][1])
+        if group_combinations['greedy_comb'][1] > 0:
+            generated_recom += 1
 
-        log.log_dynamic_metric(header, group_id, comb_score)
+            list_best.append(group_combinations['best_comb'][1])
+            list_fair.append(group_combinations['fair_comb'][1])
+            list_grdy.append(group_combinations['greedy_comb'][1])
+            list_iter.append(group_combinations['greedy_comb'][2])
+            list_time.append(group_combinations['greedy_comb'][3])
 
+        if group_combinations['fair_comb'][1] > 0:
+            possible_recom += 1
+
+    mse_from_best = sqrt(mean_squared_error(list_grdy, list_best))
+    mse_from_fair = sqrt(mean_squared_error(list_grdy, list_fair))
+    average_iterations = round(np.mean(list_iter), 2)
+    max_iterations = max(list_iter)
+    generation_success = round((generated_recom / possible_recom) * 100, 1)
+    average_duration = np.mean(list_time)
+
+    line = str(coverage_factor) + ',' + str(ratings_factor) + ',' + str(boost_factor)
+    line += ',' + str(mse_from_best) + ',' + str(mse_from_fair) + ',' + str(average_iterations)
+    line += ',' + str(max_iterations) + ',' + str(generation_success) + ',' + str(average_duration)
+    log.log_static_metric(header, line)
+
+
+'''
+FOR EACH COMBINATION TYPE COLLECT ITEM/USER COVERAGE STATS
+(HOW MANY SATISFIED USERS PER PACKAGE AND THEIR RATING)
+'''
 
 
 def top_combination_analysis(groups_map, item_stats, log, users_map):
@@ -227,22 +279,23 @@ def top_combination_analysis(groups_map, item_stats, log, users_map):
                     if item in user_obj.map_top_items_ratings:
                         item_stats[item]['rating_list'].append(user_obj.map_top_items_ratings[item])
                         satisfied_users += 1
-                    elif item in user_obj.map_possible_items_ratings:
-                        item_stats[item]['rating_list'].append(user_obj.map_possible_items_ratings[item])
+                    # elif item in user_obj.map_possible_items_ratings:
+                    #     item_stats[item]['rating_list'].append(user_obj.map_possible_items_ratings[item])
 
                 item_stats[item]['satisfied_users'].append(satisfied_users)
 
-        item_stats_analysis(comb_type,item_stats, log)
+        item_stats_analysis(comb_type, item_stats, log)
         item_stats_reset(item_stats)
 
 
+'''
+ITEM STATS ANALYSIS
+'''
 
 
-
-
-def item_stats_analysis(calaulation_type,item_stats, log):
+def item_stats_analysis(calaulation_type, item_stats, log):
     # LOG result
-    header = calaulation_type +'\n'
+    header = calaulation_type + '\n'
     header += 'item_id,number_of_times_given,number_of_groups_offered,average_rating,rating_variation,average_covered_users,variation_covered_users'
     for item in item_stats:
         num_of_times = item_stats[item]['number_of_times_given']
@@ -270,70 +323,3 @@ def item_stats_reset(item_stats):
         item_stats[item]['number_of_times_given'] = 0
         item_stats[item]['rating_list'] = []
         item_stats[item]['satisfied_users'] = []
-
-
-
-
-
-'''
-Recommender: Generate the predictions from the initial utility matrix and the similarity matrix
-'''
-
-
-def generate_prediction_matrix(initial_utility_matrix, entity_similarity_matrix, recommendation_type='user'):
-    '''
-    :param initial_utility_matrix: the utility matrix as it was loaded from the raw data
-    :param entity_similarity_matrix: the table that contains the similarity between users
-    :param recommendation_type: select user for user-user or item for item collaborative filtering default = 'user'
-    :return: a fully completed utility matrix with calculated values
-    '''
-
-    if recommendation_type == 'user':
-        '''
-        1. For each user calculate average rating behaviour.. 
-        2. Convert average rating shape by adding a dimension m-> m x 1
-        3. Calculate rating difference rating-mean_rating
-        4. Calculate the product of the entity_similarity_matrix matrix of users with normalized 
-           initial_utility_matrix(ratings_diff) row-> column and sum to calculate each rating 
-        5. Calculate normalization factor of each predicted rating for each movie
-        6.Calculate matrix with predictions
-        '''
-        mean_user_rating = initial_utility_matrix.mean(axis=1)
-        mean_user_rating_dim = mean_user_rating[:, np.newaxis]
-        ratings_diff = (initial_utility_matrix - mean_user_rating_dim)
-        table_product = np.dot(entity_similarity_matrix, ratings_diff)
-        normalizing_factor = np.array([np.abs(entity_similarity_matrix).sum(axis=1)]).T
-        matrix_of_predicted_ratings = mean_user_rating_dim + (table_product / normalizing_factor)
-
-    elif recommendation_type == 'item':
-        table_product = np.dot(initial_utility_matrix, entity_similarity_matrix)
-        normalizing_factor = np.array([np.abs(entity_similarity_matrix).sum(axis=1)])
-        matrix_of_predicted_ratings = table_product / normalizing_factor
-
-    else:
-        return []
-    return matrix_of_predicted_ratings
-
-
-'''
-Recommender: Metric to calculate Recommender accuracy
-'''
-
-
-def calculate_RMSE(matrix_with_predictions, matrix_with_test_data):
-    '''
-    :param matrix_with_predictions: np_array
-    :param matrix_with_test_data: np_array
-    :return: RMSE
-
-    1. Get the indexes of test values (rows-columns) from the test data matrix of the non-zero elements
-    2. Get the values of the calculated ratings based on the indexes_of_test_values
-    3. Get the values of the test ratings based on the indexes_of_test_values
-    4. Calculate RMSE
-    '''
-
-    indexes_of_test_values = matrix_with_test_data.nonzero()
-    predicted_values = matrix_with_predictions[indexes_of_test_values]  # (Flatten?).flatten()
-    test_values = matrix_with_test_data[indexes_of_test_values]  # .flatten()
-
-    return sqrt(mean_squared_error(predicted_values, test_values))

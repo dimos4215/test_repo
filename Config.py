@@ -27,8 +27,13 @@ class Config:
 
         self.base_dataframe_dir='/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/files/2_processed/dataframes/'
 
-
-
+        '''
+        group_type Settings
+                   1.similar
+                   2.dissimilar
+                   3.random
+        '''
+        self.group_type = 'random'
 
 
         '''
@@ -39,15 +44,16 @@ class Config:
             3.rec_repeatability_of_item : is the max number of users that can get the same item
             4.the percentage of users who have seen the item
         '''
-        self.group_size = 4
-        self.number_of_top_items = 6
-        self.number_of_rec_items = 5
-        self.threshold_cov=0.9
-        self.number_of_min_covered_items = 3
 
-        self.greedy_coverage_factor = 20.5
-        self.greedy_ratings_factor = 0.5
-        self.boost_factor = 1.6
+        self.group_size = 3
+        self.number_of_top_items = 5
+        self.number_of_rec_items = 6
+        self.threshold_cov=0.99
+        self.number_of_min_covered_items = 2
+
+        self.greedy_coverage_factor = 0.82
+        self.greedy_ratings_factor = 0.09
+        self.boost_factor = 1.3
         self.max_iterations = 100
 
         '''
@@ -56,7 +62,7 @@ class Config:
             2.variance
             3.min_max_ratio
         '''
-        self.fairness_measure = 'min_max_ratio'
+        self.fairness_measure = 'variance'
 
 
         '''
@@ -95,12 +101,16 @@ class Config:
 
     def log_file_name(self):
 
-        string = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/files/2_processed/log_'
-
-        string += 'grp_sz_' + str(self.group_size)
+        string = '/home/dimos/PycharmProjects/Py_projects/Upini_thesis_project/files/2_processed/'
+        string += self.fairness_measure
+        string += '_grp_tp_' + self.group_type
+        string += '_grp_sz_' + str(self.group_size)
         string += '_top_it_' + str(self.number_of_top_items)
         string += '_item_rec_' + str(self.number_of_rec_items)
         string += '_item_con_' + str(self.number_of_min_covered_items)
+        string += '_userfact_' + str(self.greedy_coverage_factor)
+        string += '_ratefact_' + str(self.greedy_ratings_factor)
+        string += '_boostfact_' + str(self.boost_factor)
 
         string += '.txt'
         self.log_dir = string
