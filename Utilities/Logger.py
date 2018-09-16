@@ -76,3 +76,5 @@ class Logger:
             for metrickey in self.dynamic_metric_map[metric]:
                 value = self.dynamic_metric_map[metric][metrickey]
                 f.write(str(metrickey)+','+str(value)+'\n')
+
+        f.close()

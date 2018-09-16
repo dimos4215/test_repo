@@ -10,15 +10,15 @@ import numpy as np
 Export_data_for_optimization_analysis = False
 Multirun = True
 
-boost_factor_min = 1.0
-boost_factor_max = 1.35
-boost_factor_stp = 0.05
-coverage_factor_min = 0.0
-coverage_factor_max = 2.1
-coverage_factor_stp = 0.4
-ratings_factor_min = 0.0
-ratings_factor_max = 1.1
-ratings_factor_stp = 3.0
+boost_factor_min = 1.1
+boost_factor_max = 1.2
+boost_factor_stp = 0.2
+coverage_factor_min = 0.3
+coverage_factor_max = 0.4
+coverage_factor_stp = 0.3
+ratings_factor_min = 0.5
+ratings_factor_max = 0.61
+ratings_factor_stp = 0.2
 
 # Load Settings and Start Logging process
 cfg = Config()

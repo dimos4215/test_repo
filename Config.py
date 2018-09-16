@@ -33,7 +33,7 @@ class Config:
                    2.dissimilar
                    3.random
         '''
-        self.group_type = 'random'
+        self.group_type = 'dissimilar'
 
 
         '''
@@ -45,11 +45,11 @@ class Config:
             4.the percentage of users who have seen the item
         '''
 
-        self.group_size = 3
-        self.number_of_top_items = 5
-        self.number_of_rec_items = 6
+        self.group_size = 7
+        self.number_of_top_items = 3
+        self.number_of_rec_items = 4
         self.threshold_cov=0.99
-        self.number_of_min_covered_items = 2
+        self.number_of_min_covered_items = 1
 
         self.greedy_coverage_factor = 0.82
         self.greedy_ratings_factor = 0.09
@@ -62,7 +62,7 @@ class Config:
             2.variance
             3.min_max_ratio
         '''
-        self.fairness_measure = 'variance'
+        self.fairness_measure = 'min_max_ratio'
 
 
         '''

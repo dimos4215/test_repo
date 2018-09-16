@@ -86,7 +86,7 @@ def combination_test_brute(groups_map, users_map, log, conf_object):
         # LOG result
         header = 'group_id,total_combinations,valid_combinations'
         key = str(group_id) + ',' + str(total_combinations)
-        log.log_dynamic_metric(header, key, valid_combinations)
+        # log.log_dynamic_metric(header, key, valid_combinations)
 
     progress.done()
 
@@ -117,9 +117,9 @@ def combination_test_greedy(groups_map, users_map, log, conf_object):
     boost_factor = conf_object.boost_factor
     max_iterations = conf_object.max_iterations
 
-    log.log_static_metric('min_covered_items', min_covered_items)
-    log.log_static_metric('ratings_factor', ratings_factor)
-    log.log_static_metric('coverage_factor', coverage_factor)
+    # log.log_static_metric('min_covered_items', min_covered_items)
+    # log.log_static_metric('ratings_factor', ratings_factor)
+    # log.log_static_metric('coverage_factor', coverage_factor)
 
     start = time.clock()
     for group_id in groups_map:
@@ -128,7 +128,7 @@ def combination_test_greedy(groups_map, users_map, log, conf_object):
         tmp_item_score = {}
         iterations_list = []
 
-        # GENERATE Initial Combination
+        # Get Score features for each item
         for user_id in users_ids:
             user_obj = users_map[user_id]
             item_ratings = user_obj.map_top_items_ratings
@@ -149,18 +149,30 @@ def combination_test_greedy(groups_map, users_map, log, conf_object):
         # ITERATE until constrain reached
         score = -1
         iterations = 0
-        while score < 0 and max_iterations > iterations:
+        delta_threshold = 0.5
+        delta = -1
+        best_score = -2
+        best_comb = []
+
+        while (score < 0 or delta > delta_threshold) and max_iterations > iterations:
             iterations += 1
+
+            top = {k: tmp_item_score[k] for k in sorted(tmp_item_score, key=lambda k: -tmp_item_score[k])[:n]}
+            comb = list(top.keys())
+            score, user_id = calculate_combination_score(comb, users_ids, users_map, min_covered_items,
+                                                             fairness_mes)
+
+            if best_score < score:
+                delta = score - best_score
+                best_score = score
+                best_comb = comb
+
             for item in users_map[user_id].map_top_items_ratings:
                 tmp_item_score[item] = tmp_item_score[item] * boost_factor
-                top = {k: tmp_item_score[k] for k in sorted(tmp_item_score, key=lambda k: -tmp_item_score[k])[:n]}
-                comb = list(top.keys())
-                score, user_id = calculate_combination_score(comb, users_ids, users_map, min_covered_items,
-                                                             fairness_mes)
 
         iterations_list.append(iterations)
         duration = time.clock() - start
-        groups_map[group_id].result_obj['greedy_comb'] = [comb, score, iterations, duration]
+        groups_map[group_id].result_obj['greedy_comb'] = [best_comb, best_score, iterations, duration]
 
 
 def greedy_algorith_score_function(ratings_factor, coverage_factor, users, ratings_list):
@@ -194,7 +206,7 @@ def calculate_combination_score(comb, users_ids, users_map, min_covered_items, f
     # score = 1 / np.var(result_list)
     if user_coverage_check(tmp_usr_coverage_map, min_covered_items):
         score = metric_calculation(result_list, fairness_mes)
-        return score, None
+        return score, min(tmp_satisfaction_map, key=tmp_usr_coverage_map.get)
     else:
         return -1, min(tmp_usr_coverage_map, key=tmp_usr_coverage_map.get)
 
@@ -212,8 +224,9 @@ def greedy_algorith_deviation(groups_map, log, conf_object):
 
     header = 'Combination Result\n'
     header += 'coverage_factor,ratings_factor,boost_factor,'
-    header += 'mse_from_best,mse_from_fair,average_iterations,max_iterations'
-    header += 'generation_success,duration_avg(s)'
+    header += 'mse_from_best,mse_from_fair,average_iterations,max_iterations,'
+    header += 'generation_success,duration_avg(s),'
+    header += 'total_best_score,avg_best_score,total_fair_score,avg_fair_score,total_grd_score,avg_grd_score'
     list_best = []
     list_fair = []
     list_grdy = []
@@ -237,17 +250,30 @@ def greedy_algorith_deviation(groups_map, log, conf_object):
         if group_combinations['fair_comb'][1] > 0:
             possible_recom += 1
 
-    mse_from_best = sqrt(mean_squared_error(list_grdy, list_best))
-    mse_from_fair = sqrt(mean_squared_error(list_grdy, list_fair))
-    average_iterations = round(np.mean(list_iter), 2)
-    max_iterations = max(list_iter)
-    generation_success = round((generated_recom / possible_recom) * 100, 1)
-    average_duration = np.mean(list_time)
+    if len(list_iter)>0:
+        mse_from_best = sqrt(mean_squared_error(list_grdy, list_best))
+        mse_from_fair = sqrt(mean_squared_error(list_grdy, list_fair))
+        average_iterations = round(np.mean(list_iter), 2)
+        max_iterations = max(list_iter)
+        generation_success = round((generated_recom / possible_recom) * 100, 1)
+        average_duration = np.mean(list_time)
+        total_best_score = sum(list_best)
+        avg_best_score = round(np.mean(list_best), 5)
 
-    line = str(coverage_factor) + ',' + str(ratings_factor) + ',' + str(boost_factor)
-    line += ',' + str(mse_from_best) + ',' + str(mse_from_fair) + ',' + str(average_iterations)
-    line += ',' + str(max_iterations) + ',' + str(generation_success) + ',' + str(average_duration)
-    log.log_static_metric(header, line)
+        total_fair_score = sum(list_fair)
+        avg_fair_score = round(np.mean(list_fair), 5)
+
+        total_grd_score = sum(list_grdy)
+        avg_grd_score = round(np.mean(list_grdy), 5)
+
+        line = str(coverage_factor) + ',' + str(ratings_factor) + ',' + str(boost_factor)
+        line += ',' + str(mse_from_best) + ',' + str(mse_from_fair) + ',' + str(average_iterations)
+        line += ',' + str(max_iterations) + ',' + str(generation_success) + ',' + str(average_duration)
+
+        line += ',' + str(total_best_score) + ',' + str(avg_best_score) + ',' + str(total_fair_score)
+        line += ',' + str(avg_fair_score) + ',' + str(total_grd_score) + ',' + str(avg_grd_score)
+
+        log.log_static_metric(header, line)
 
 
 '''
@@ -315,7 +341,7 @@ def item_stats_analysis(calaulation_type, item_stats, log):
         key += ',' + str(var_rating)
         key += ',' + str(avg_users_covered)
 
-        log.log_dynamic_metric(header, key, var_users_covered)
+        #log.log_dynamic_metric(header, key, var_users_covered):todo remove logging
 
 
 def item_stats_reset(item_stats):
